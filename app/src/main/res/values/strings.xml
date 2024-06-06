@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Story Application</string>
+    <string name="signup">Daftar</string>
+    <string name="login">Masuk</string>
+    <string name="message_welcome_page">Mau belajar Android, iOS, Machine Learning, Cloud, Front-End, Back-End, dan bidang IT lainnya? Di Dicoding aja!</string>
+    <string name="title_welcome_page">Selamat datang di Dicoding!</string>
+    <string name="title_signup_page">Lengkapi data dirimu di bawah ini ya</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="message_login_page">Masukkan dulu datamu ya</string>
+    <string name="title_login_page">Sudah siap untuk upgrade skill?</string>
+    <string name="name">Nama</string>
+    <string name="message_main_page">Selamat Belajar di Dicoding.</string>
+    <string name="greeting">Halo %1$s,</string>
+    <string name="logout">Keluar</string>
+    <string name="description">Description</string>
+    <string name="title">Title</string>
+    <string name="toStories">Lihat Cerita</string>
+    <string name="title_detail">Title Detail</string>
+    <string name="descTitle">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum</string>
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="dummy_text">Tell your story here</string>
+    <string name="empty_warning">Tidak ada Image terpilih\n</string>
+    <string name="empty_description_warning">No Description was given\n</string>
+    <string name="empty_image_warning">No image was choosen</string>
+    <string name="title_activity_maps">MapsActivity</string>
+</resources>
