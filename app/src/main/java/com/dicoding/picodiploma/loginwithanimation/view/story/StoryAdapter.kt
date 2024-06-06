@@ -5,14 +5,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.paging.PagingDataAdapter
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.dicoding.picodiploma.loginwithanimation.R
 import com.dicoding.picodiploma.loginwithanimation.response.ListStoryItem
 
-class StoryAdapter(private val listener: OnStoryItemClickListener) : RecyclerView.Adapter<StoryAdapter.ViewHolder>() {
-
-    private var storyItems: List<ListStoryItem> = emptyList()
+class StoryAdapter(private val listener: OnStoryItemClickListener) :
+    PagingDataAdapter<ListStoryItem, StoryAdapter.ViewHolder>(StoryItemComparator) {
 
     interface OnStoryItemClickListener {
         fun onStoryItemClick(storyId: String, sharedViews: List<Pair<View, String>>)
@@ -24,10 +25,10 @@ class StoryAdapter(private val listener: OnStoryItemClickListener) : RecyclerVie
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = storyItems[position]
-        holder.bind(item)
+        val item = getItem(position)
+        item?.let { holder.bind(it) }
         holder.itemView.setOnClickListener {
-            item.id?.let { id ->
+            item?.id?.let { id ->
                 val sharedViews = listOf(
                     Pair(holder.imgStory as View, "detailPhoto"),
                     Pair(holder.titleStory as View, "title"),
@@ -38,14 +39,7 @@ class StoryAdapter(private val listener: OnStoryItemClickListener) : RecyclerVie
         }
     }
 
-    override fun getItemCount(): Int = storyItems.size
-
-    fun getStoriesList(newStories: List<ListStoryItem>) {
-        storyItems = newStories
-        notifyDataSetChanged()
-    }
-
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val imgStory: ImageView = view.findViewById(R.id.story_pict)
         val titleStory: TextView = view.findViewById(R.id.story_name)
         val titleDesc: TextView = view.findViewById(R.id.story_desc)
@@ -56,6 +50,18 @@ class StoryAdapter(private val listener: OnStoryItemClickListener) : RecyclerVie
             Glide.with(itemView.context)
                 .load(item.photoUrl)
                 .into(imgStory)
+        }
+    }
+
+    companion object {
+        private val StoryItemComparator = object : DiffUtil.ItemCallback<ListStoryItem>() {
+            override fun areItemsTheSame(oldItem: ListStoryItem, newItem: ListStoryItem): Boolean {
+                return oldItem.id == newItem.id
+            }
+
+            override fun areContentsTheSame(oldItem: ListStoryItem, newItem: ListStoryItem): Boolean {
+                return oldItem == newItem
+            }
         }
     }
 }

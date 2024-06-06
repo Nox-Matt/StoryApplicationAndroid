@@ -3,8 +3,10 @@ package com.dicoding.picodiploma.loginwithanimation.view
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.paging.PagingData
+import androidx.paging.map
 import com.dicoding.picodiploma.loginwithanimation.R
-
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -14,6 +16,10 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.dicoding.picodiploma.loginwithanimation.databinding.ActivityMapsBinding
 import com.dicoding.picodiploma.loginwithanimation.response.ListStoryItem
 import com.dicoding.picodiploma.loginwithanimation.view.story.StoryViewModel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -38,7 +44,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         setupMap()
-        observeStories()
+        observeStoriesWithLocation()
+
+        val initialCamera = LatLng(-2.5489, 118.0149)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(initialCamera, 5f))
     }
 
     private fun setupMap() {
@@ -48,9 +57,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mMap.uiSettings.isMapToolbarEnabled = true
     }
 
-    private fun observeStories() {
-        viewModel.stories.observe(this) { stories ->
-            if (stories != null) {
+    private fun observeStoriesWithLocation() {
+        lifecycleScope.launch {
+            viewModel.storiesWithLocation.collectLatest { stories ->
                 addStoryMarkers(stories)
             }
         }
@@ -67,9 +76,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                         .title(story.name)
                         .snippet(story.description)
                 )
-                if (marker != null) {
-                    marker.tag = story.id
-                }
+                marker?.tag = story.id
             }
         }
     }

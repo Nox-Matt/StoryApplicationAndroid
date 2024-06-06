@@ -4,34 +4,35 @@ package com.dicoding.picodiploma.loginwithanimation.view.story
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityOptionsCompat
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.dicoding.picodiploma.loginwithanimation.R
 import com.dicoding.picodiploma.loginwithanimation.databinding.ActivityStoryBinding
 import com.dicoding.picodiploma.loginwithanimation.detail.DetailActivity
 import com.dicoding.picodiploma.loginwithanimation.view.MapsActivity
 import com.dicoding.picodiploma.loginwithanimation.view.StoryViewModelFactory
 import com.dicoding.picodiploma.loginwithanimation.view.story.add.AddStoryActivity
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
+
 
 class StoryActivity : AppCompatActivity(), StoryAdapter.OnStoryItemClickListener {
 
     private lateinit var binding: ActivityStoryBinding
     private lateinit var storyAdapter: StoryAdapter
-    private lateinit var viewModel: StoryViewModel
+    private val viewModel: StoryViewModel by viewModels { StoryViewModelFactory.getInstance(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityStoryBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setupViewModel()
         setupRecyclerView()
         observeStories()
 
-        binding.toMapButton.setOnClickListener{
-            val intent = Intent(this,MapsActivity::class.java)
+        binding.toMapButton.setOnClickListener {
+            val intent = Intent(this, MapsActivity::class.java)
             startActivity(intent)
         }
         binding.addStoryButton.setOnClickListener {
@@ -48,15 +49,9 @@ class StoryActivity : AppCompatActivity(), StoryAdapter.OnStoryItemClickListener
             androidx.core.util.Pair(pair.first, pair.second)
         }.toTypedArray()
 
-        val optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(this, *sharedElements)
+        val optionsCompat =
+            ActivityOptionsCompat.makeSceneTransitionAnimation(this, *sharedElements)
         startActivity(intent, optionsCompat.toBundle())
-    }
-
-
-    private fun setupViewModel() {
-        val factory = StoryViewModelFactory.getInstance(this)
-        viewModel = ViewModelProvider(this, factory)[StoryViewModel::class.java]
-        viewModel.getAllStories()
     }
 
     private fun setupRecyclerView() {
@@ -68,8 +63,10 @@ class StoryActivity : AppCompatActivity(), StoryAdapter.OnStoryItemClickListener
     }
 
     private fun observeStories() {
-        viewModel.stories.observe(this) { stories ->
-            storyAdapter.getStoriesList(stories)
+        lifecycleScope.launch {
+            viewModel.stories.collectLatest { pagingData ->
+                storyAdapter.submitData(pagingData)
+            }
         }
     }
 }
