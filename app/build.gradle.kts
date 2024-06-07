@@ -53,9 +53,22 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.0")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("androidx.paging:paging-runtime-ktx:3.3.0")
+    implementation("com.google.android.gms:play-services-tflite-support:16.1.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-testing:2.8.1")
+    testImplementation("junit:junit:4.12")
+    testImplementation("junit:junit:4.12")
+    // AndroidX Core Testing
+    androidTestImplementation("androidx.arch.core:core-testing:2.1.0") // InstantTaskExecutorRule
+    testImplementation("androidx.arch.core:core-testing:2.1.0") // InstantTaskExecutorRule
 
+    // Kotlin Coroutines Test
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0") // TestDispatcher
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0") // TestDispatcher
 
-
+    // Mockito
+    androidTestImplementation ("com.chairman.PowerMockito2:mockito-kotlin:x.x.x")
+    testImplementation("org.mockito:mockito-core:4.0.0")
+    testImplementation("org.mockito:mockito-inline:4.0.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

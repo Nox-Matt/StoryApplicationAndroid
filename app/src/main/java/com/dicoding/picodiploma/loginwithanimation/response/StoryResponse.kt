@@ -1,5 +1,6 @@
 package com.dicoding.picodiploma.loginwithanimation.response
 
+import androidx.paging.PagingData
 import com.google.gson.annotations.SerializedName
 
 data class StoryResponse(

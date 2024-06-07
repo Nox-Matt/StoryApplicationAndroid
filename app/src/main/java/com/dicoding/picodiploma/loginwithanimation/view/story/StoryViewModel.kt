@@ -27,12 +27,13 @@ class StoryViewModel(private val repository: StoryRepository) : ViewModel() {
 
     private val _storiesWithLocation = MutableStateFlow<List<ListStoryItem>>(emptyList())
     val storiesWithLocation: StateFlow<List<ListStoryItem>> = _storiesWithLocation
+
     init {
         getAllStoriesWithLocation()
         getAllStories()
     }
 
-    private fun getAllStories() {
+    fun getAllStories() {
         viewModelScope.launch {
             try {
                 val pager = Pager(
