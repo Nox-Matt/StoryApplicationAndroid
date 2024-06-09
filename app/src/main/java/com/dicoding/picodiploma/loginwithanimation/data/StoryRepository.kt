@@ -14,8 +14,15 @@ import okhttp3.RequestBody
 
 class StoryRepository(private val apiService: ApiService) {
 
+    fun getFlowStories(): Flow<PagingData<ListStoryItem>> {
+        return Pager(
+            config = PagingConfig(pageSize = 20),
+            pagingSourceFactory = { StoryPagingSource(this) }
+        ).flow
+    }
+
     suspend fun getStories(page: Int): StoryResponse {
-        return apiService.getStories(page = page)
+        return apiService.getStories(page)
     }
 
     suspend fun getStoryDetail(id: String): DetailResponse {

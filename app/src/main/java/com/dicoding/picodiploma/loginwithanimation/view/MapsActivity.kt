@@ -4,8 +4,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.paging.PagingData
-import androidx.paging.map
 import com.dicoding.picodiploma.loginwithanimation.R
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -17,9 +15,7 @@ import com.dicoding.picodiploma.loginwithanimation.databinding.ActivityMapsBindi
 import com.dicoding.picodiploma.loginwithanimation.response.ListStoryItem
 import com.dicoding.picodiploma.loginwithanimation.view.story.StoryViewModel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -34,7 +30,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         setContentView(binding.root)
 
         val factory = StoryViewModelFactory.getInstance(this)
-        viewModel = ViewModelProvider(this, factory).get(StoryViewModel::class.java)
+        viewModel = ViewModelProvider(this, factory)[StoryViewModel::class.java]
+
+        viewModel.fetchStoriesWithLocation()
 
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment

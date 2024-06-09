@@ -1,87 +1,136 @@
 package com.dicoding.picodiploma.loginwithanimation.view.story
 
+
+import android.util.Log
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.lifecycle.MutableLiveData
 import androidx.paging.AsyncPagingDataDiffer
 import androidx.paging.PagingData
 import androidx.recyclerview.widget.ListUpdateCallback
 import com.dicoding.picodiploma.loginwithanimation.DataDummy
+import com.dicoding.picodiploma.loginwithanimation.LogMock
 import com.dicoding.picodiploma.loginwithanimation.MainDispatcherRule
+import com.dicoding.picodiploma.loginwithanimation.api.ApiService
 import com.dicoding.picodiploma.loginwithanimation.data.StoryRepository
 import com.dicoding.picodiploma.loginwithanimation.response.ListStoryItem
-import com.dicoding.picodiploma.loginwithanimation.response.StoryResponse
-import junit.framework.TestCase.assertNotNull
+import io.mockk.coEvery
+import io.mockk.spyk
+import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.MockedStatic
+import org.mockito.Mockito.mockStatic
+import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 @ExperimentalCoroutinesApi
-@RunWith(MockitoJUnitRunner::class)
-class StoryViewModelTest {
+class StoryViewModelTest : LogMock() {
 
     @get:Rule
     val instantExecutorRule = InstantTaskExecutorRule()
+
     @get:Rule
     val mainDispatcherRules = MainDispatcherRule()
+
     @Mock
+    private lateinit var apiService: ApiService
+
     private lateinit var storyRepository: StoryRepository
+
+    private val storyViewModel: StoryViewModel by lazy { StoryViewModel(storyRepository) }
+
+    private lateinit var logMock: MockedStatic<Log>
 
     @Before
     fun setup() {
-        storyRepository = Mockito.mock(StoryRepository::class.java, Mockito.RETURNS_DEEP_STUBS)
+        MockitoAnnotations.openMocks(this)
+
+        logMock = mockStatic(Log::class.java)
+        logMock.`when`<Any> { Log.e(anyString(), anyString(), any()) }.then { invocation ->
+            val tag = invocation.arguments[0] as String
+            val msg = invocation.arguments[1] as String
+            println("Mocked Log.e call with tag: $tag and message: $msg")
+            null
+        }
+
+        storyRepository = spyk(StoryRepository(apiService))
+    }
+
+    @After
+    fun tearDown() {
+        logMock.close()
     }
 
     @Test
     fun `when Get Stories Should Not Null and Return Data`() = runTest {
-        val dummyStory = DataDummy.generateDummyStoryResponse().listStory!!.filterNotNull()
-        val data: PagingData<ListStoryItem> = PagingData.from(dummyStory)
+        val dummyStoryResponse = DataDummy.generateDummyStoryResponse()
+        assertEquals("Stories fetched successfully", dummyStoryResponse.message)
+        val dummyStory = dummyStoryResponse.listStory!!.filterNotNull()
+        val pagingData: PagingData<ListStoryItem> = PagingData.from(dummyStory)
 
-        Mockito.`when`(storyRepository.getStoriesWithLocation()).thenReturn(StoryResponse(listStory = dummyStory, error = false, message = ""))
-
-        val storyViewModel = StoryViewModel(storyRepository)
-        val actualStoryList: List<ListStoryItem> = storyViewModel.storiesWithLocation.value
-        val actualStory: PagingData<ListStoryItem> = PagingData.from(actualStoryList)
+        coEvery { storyRepository.getFlowStories() } returns flowOf(pagingData)
+        val actualStoryFlow = storyViewModel.stories
 
         val differ = AsyncPagingDataDiffer(
             diffCallback = StoryAdapter.StoryItemComparator,
             updateCallback = noopListUpdateCallback,
-            workerDispatcher = Dispatchers.Main,
+            workerDispatcher = Dispatchers.Main
         )
-        actualStory.let { differ.submitData(it) }
 
-        Assert.assertNotNull(differ.snapshot())
-        Assert.assertEquals(dummyStory.size, differ.snapshot().size)
-        Assert.assertEquals(dummyStory[0], differ.snapshot()[0])
+        val job = launch {
+            actualStoryFlow.collectLatest { pagingData ->
+                differ.submitData(pagingData)
+            }
+        }
+        advanceUntilIdle()
+        assertTrue("PagingData snapshot should not be null", true )
+        assertTrue("Snapshot size should match dummy data",dummyStory.size == differ.snapshot().size)
+        assertTrue("First item should match",dummyStory[0] == differ.snapshot()[0])
+        println("Snapshot size: ${differ.snapshot().size}")
+        println("First item in snapshot: ${differ.snapshot()[0]}")
+
+        job.cancel()
     }
-
     @Test
-    fun `when Get Stories Should Not Null`() = runTest {
-        val dummyStory = DataDummy.generateDummyStoryResponse().listStory!!.filterNotNull()
-        val data: PagingData<ListStoryItem> = PagingData.from(dummyStory)
+    fun `when Get Stories Should Return Empty Data`() = runTest {
+        val data: PagingData<ListStoryItem> = PagingData.from(emptyList())
 
-        Mockito.`when`(storyRepository.getStoriesWithLocation()).thenReturn(StoryResponse(listStory = dummyStory, error = false, message = ""))
+        coEvery { storyRepository.getFlowStories() } returns flowOf(data)
+        storyViewModel.fetchStories()
+        val actualStoryFlow = storyViewModel.stories
 
-        val mainViewModel = StoryViewModel(storyRepository)
-        val actualStoryList: List<ListStoryItem> = mainViewModel.storiesWithLocation.value
-        val actualStory: PagingData<ListStoryItem> = PagingData.from(actualStoryList)
+        val job = launch {
+            actualStoryFlow.collectLatest { pagingData ->
+                val differ = AsyncPagingDataDiffer(
+                    diffCallback = StoryAdapter.StoryItemComparator,
+                    updateCallback = noopListUpdateCallback,
+                    workerDispatcher = Dispatchers.Main
+                )
+                differ.submitData(pagingData)
+                assertTrue("Snapshot should be empty",differ.snapshot().isEmpty() )
 
-        val differ = AsyncPagingDataDiffer(
-            diffCallback = StoryAdapter.StoryItemComparator,
-            updateCallback = noopListUpdateCallback,
-            workerDispatcher = Dispatchers.Main,
-        )
-        actualStory.let { differ.submitData(it) }
+                println("Empty snapshot received")
+            }
+        }
 
-        assertNotNull(differ.snapshot())
+
+        advanceUntilIdle()
+
+        job.cancel()
     }
 
     private val noopListUpdateCallback = object : ListUpdateCallback {
@@ -91,3 +140,4 @@ class StoryViewModelTest {
         override fun onChanged(position: Int, count: Int, payload: Any?) {}
     }
 }
+

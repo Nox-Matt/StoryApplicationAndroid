@@ -29,6 +29,7 @@ class StoryActivity : AppCompatActivity(), StoryAdapter.OnStoryItemClickListener
         binding = ActivityStoryBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setupRecyclerView()
+        viewModel.fetchStories()
         observeStories()
 
         binding.toMapButton.setOnClickListener {
